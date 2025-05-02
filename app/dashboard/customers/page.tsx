@@ -1,9 +1,25 @@
+import { fetchFilteredCustomers } from '@/app/lib/data';
+import CustomersTable from '@/app/ui/customers/table';
+import { Metadata } from 'next';
 
-export default function Page() {
-    return (
-        <div className="flex flex-col gap-4">
-            <h1 className="text-2xl font-bold">Customers</h1>
-            <p>Customers Page</p>
-        </div>
-    );
+export const metadata: Metadata = {
+  title: 'Customers',
+};
+
+export default async function Page(props: {
+  searchParams?: Promise<{
+    query?: string;
+    page?: string;
+  }>;
+}) {
+  const searchParams = await props.searchParams;
+  const query = searchParams?.query || '';
+
+  const customers = await fetchFilteredCustomers(query);
+
+  return (
+    <main>
+      <CustomersTable customers={customers} />
+    </main>
+  );
 }
