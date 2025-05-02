@@ -1,16 +1,20 @@
-## Next.js App Router Course - Starter
+## Next.js App Router Course - Dashboard
 
-[vercel/next-learn/tree/main/dashboard/final-example](https://github.com/vercel/next-learn/tree/main/dashboard/final-example)
+- [Next Dashboard App](https://nextjs.org/learn/dashboard-app)
 
-This is the starter template for the Next.js App Router Course. It contains the starting code for the dashboard application.
+- [Next Dashboard Demo](https://next-learn-dashboard.vercel.sh/dashboard)
 
-For more information, see the [course curriculum](https://nextjs.org/learn) on the Next.js Website.
+- [Next Dashboard Codes](https://github.com/vercel/next-learn/tree/main/dashboard/final-example)
+
+- [Resources](https://nextjs.org/learn/dashboard-app/next-steps)
+
+- [More Learns](https://nextjs.org/learn)
 
 ## installed
 
-- postgresql
-- mongodb
-- nginx
+- postgresql (local postgresql@17)
+- mongodb (not used)
+- nginx (not used)
 
 ```bash
 $ brew services list
