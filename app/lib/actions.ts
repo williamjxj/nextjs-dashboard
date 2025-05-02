@@ -4,6 +4,27 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import postgres from 'postgres';
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: false });
  
@@ -61,4 +82,13 @@ export async function deleteInvoice(id: string) {
   await sql`DELETE FROM invoices WHERE id = ${id}`;
   
   revalidatePath('/dashboard/invoices');
+}
+
+export async function getInvoice(id: string) {
+  const invoice = await sql`SELECT * FROM invoices WHERE id = ${id}`;
+  return invoice[0];
+}
+export async function getInvoices() { 
+  const invoices = await sql`SELECT * FROM invoices`;
+  return invoices;
 }
