@@ -28,6 +28,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# vscode settings with secrets
+.vscode/mcp.json
+
 # vercel
 .vercel
 
