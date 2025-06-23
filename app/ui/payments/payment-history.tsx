@@ -3,7 +3,6 @@
 import { safeFormatDateTime } from "@/app/lib/date-utils";
 import { Button } from "@/app/ui/button";
 import {
-  ArrowPathIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentTextIcon,
@@ -37,7 +36,7 @@ interface Refund {
   id: string;
   amount: number;
   currency: string;
-  status: "PENDING" | "SUCCEEDED" | "FAILED";
+  status: "PENDING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
   reason?: string;
   createdAt: Date;
   processedAt?: Date;
@@ -57,7 +56,7 @@ export default function PaymentHistory({
   const [expandedPayments, setExpandedPayments] = useState<Set<string>>(
     new Set()
   );
-  const [refundingPayment, setRefundingPayment] = useState<string | null>(null);
+  const [,] = useState<string | null>(null);
 
   const toggleExpanded = (paymentId: string) => {
     const newExpanded = new Set(expandedPayments);
@@ -123,11 +122,12 @@ export default function PaymentHistory({
         {payments.map((payment) => {
           const isExpanded = expandedPayments.has(payment.id);
           const hasRefunds = payment.refunds && payment.refunds.length > 0;
-          const totalRefunded = hasRefunds
-            ? payment.refunds
-                .filter((r) => r.status === "SUCCEEDED")
-                .reduce((sum, r) => sum + r.amount, 0)
-            : 0;
+          const totalRefunded =
+            hasRefunds && payment.refunds
+              ? payment.refunds
+                  .filter((r) => r.status === "SUCCEEDED")
+                  .reduce((sum, r) => sum + r.amount, 0)
+              : 0;
 
           return (
             <div
@@ -180,16 +180,10 @@ export default function PaymentHistory({
 
                     {showRefundButton && payment.status === "SUCCEEDED" && (
                       <Button
-                        size="sm"
-                        variant="outline"
+                        className="px-3 py-1 text-sm bg-gray-500 hover:bg-gray-400 active:bg-gray-600"
                         onClick={() => handleRefund(payment.id)}
-                        disabled={refundingPayment === payment.id}
                       >
-                        {refundingPayment === payment.id ? (
-                          <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Refund"
-                        )}
+                        Refund
                       </Button>
                     )}
 

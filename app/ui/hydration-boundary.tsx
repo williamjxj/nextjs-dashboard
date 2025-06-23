@@ -11,7 +11,7 @@ export default function HydrationBoundary({
 }: {
   children: React.ReactNode;
 }) {
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [, setIsHydrated] = useState(false);
 
   useEffect(() => {
     // Mark as hydrated after the component mounts

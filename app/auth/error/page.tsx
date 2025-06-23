@@ -1,12 +1,13 @@
-import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
-export default function AuthErrorPage({
+export default async function AuthErrorPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const error = searchParams?.error;
+  const params = await searchParams;
+  const error = params?.error;
 
   const getErrorMessage = (error: string | undefined) => {
     switch (error) {
@@ -31,9 +32,7 @@ export default function AuthErrorPage({
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
             Authentication Error
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            {getErrorMessage(error)}
-          </p>
+          <p className="mt-2 text-sm text-gray-600">{getErrorMessage(error)}</p>
         </div>
 
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

@@ -6,7 +6,10 @@ interface PayPalPaymentFormProps {
   orderId: string;
   amount: number;
   currency: string;
-  onSuccess: (details: any) => void;
+  onSuccess: (details: {
+    success: boolean;
+    order: { id: string; status: string };
+  }) => void;
   onError: (error: string) => void;
   onCancel?: () => void;
 }
@@ -30,7 +33,7 @@ export default function PayPalPaymentForm({
     return Promise.resolve(orderId);
   };
 
-  const onApprove = async (data: any) => {
+  const onApprove = async (data: { orderID: string }) => {
     try {
       const response = await fetch("/api/payments/paypal/capture", {
         method: "POST",
@@ -49,7 +52,7 @@ export default function PayPalPaymentForm({
 
       const details = await response.json();
       onSuccess(details);
-    } catch (error) {
+    } catch {
       onError("Failed to complete payment. Please try again.");
     }
   };

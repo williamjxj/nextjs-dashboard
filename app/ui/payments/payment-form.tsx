@@ -36,7 +36,13 @@ export default function PaymentForm({
   const [paymentStep, setPaymentStep] = useState<
     "select" | "pay" | "success" | "error"
   >("select");
-  const [paymentData, setPaymentData] = useState<any>(null);
+  const [paymentData, setPaymentData] = useState<{
+    id: string;
+    clientSecret?: string;
+    amount?: number;
+    currency?: string;
+    status?: string;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
@@ -84,7 +90,7 @@ export default function PaymentForm({
           setPaymentStep("error");
         }
       }
-    } catch (error) {
+    } catch {
       setErrorMessage("An unexpected error occurred");
       setPaymentStep("error");
     } finally {
@@ -180,29 +186,32 @@ export default function PaymentForm({
         </div>
       )}
 
-      {paymentStep === "pay" && selectedMethod === "STRIPE" && paymentData && (
-        <div className="space-y-6">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleBackToSelect}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
-            </button>
-            <h3 className="text-lg font-medium text-gray-900">
-              Pay with Credit Card
-            </h3>
-          </div>
+      {paymentStep === "pay" &&
+        selectedMethod === "STRIPE" &&
+        paymentData &&
+        paymentData.clientSecret && (
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={handleBackToSelect}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+              </button>
+              <h3 className="text-lg font-medium text-gray-900">
+                Pay with Credit Card
+              </h3>
+            </div>
 
-          <ModernStripePaymentForm
-            clientSecret={paymentData.clientSecret}
-            amount={paymentData.amount}
-            currency={paymentData.currency}
-            onSuccess={handlePaymentSuccess}
-            onError={handlePaymentError}
-          />
-        </div>
-      )}
+            <ModernStripePaymentForm
+              clientSecret={paymentData.clientSecret}
+              amount={paymentData.amount || amount}
+              currency={paymentData.currency || currency}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+            />
+          </div>
+        )}
 
       {paymentStep === "pay" && selectedMethod === "PAYPAL" && paymentData && (
         <div className="space-y-6">

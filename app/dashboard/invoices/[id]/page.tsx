@@ -196,10 +196,20 @@ export default async function InvoiceDetailPage({
             <PaymentHistory
               payments={invoice.payments.map((payment) => ({
                 ...payment,
+                description: payment.description || undefined,
+                receiptUrl: payment.receiptUrl || undefined,
+                receiptEmail: payment.receiptEmail || undefined,
+                stripePaymentIntentId:
+                  payment.stripePaymentIntentId || undefined,
+                paypalOrderId: payment.paypalOrderId || undefined,
+                failureReason: payment.failureReason || undefined,
                 createdAt: new Date(payment.createdAt),
                 paidAt: payment.paidAt ? new Date(payment.paidAt) : undefined,
                 refunds: payment.refunds?.map((refund) => ({
                   ...refund,
+                  reason: refund.reason || undefined,
+                  stripeRefundId: refund.stripeRefundId || undefined,
+                  paypalRefundId: refund.paypalRefundId || undefined,
                   createdAt: new Date(refund.createdAt),
                   processedAt: refund.processedAt
                     ? new Date(refund.processedAt)

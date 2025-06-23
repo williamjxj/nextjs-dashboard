@@ -13,7 +13,7 @@ const FormSchema = z.object({
   id: z.string(),
   customerId: z.string(),
   amount: z.coerce.number(),
-  status: z.enum(["pending", "paid"]),
+  status: z.enum(["PENDING", "PAID", "PARTIALLY_PAID", "OVERDUE", "CANCELLED"]),
   date: z.string(),
 });
 

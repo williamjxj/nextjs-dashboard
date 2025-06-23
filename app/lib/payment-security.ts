@@ -1,10 +1,13 @@
-import { z } from "zod";
 import crypto from "crypto";
+import { z } from "zod";
 
 // Validation schemas for payment data
 export const PaymentValidationSchema = z.object({
   invoiceId: z.string().min(1, "Invoice ID is required").max(100),
-  amount: z.number().positive("Amount must be positive").max(1000000, "Amount too large"),
+  amount: z
+    .number()
+    .positive("Amount must be positive")
+    .max(1000000, "Amount too large"),
   currency: z.string().length(3, "Currency must be 3 characters").toUpperCase(),
   paymentMethod: z.enum(["STRIPE", "PAYPAL"], {
     errorMap: () => ({ message: "Invalid payment method" }),
@@ -47,7 +50,9 @@ export class PaymentSecurity {
       return PaymentValidationSchema.parse(data);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new Error(`Validation failed: ${error.errors.map(e => e.message).join(", ")}`);
+        throw new Error(
+          `Validation failed: ${error.errors.map((e) => e.message).join(", ")}`
+        );
       }
       throw new Error("Invalid payment data");
     }
@@ -61,7 +66,9 @@ export class PaymentSecurity {
       return RefundValidationSchema.parse(data);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        throw new Error(`Validation failed: ${error.errors.map(e => e.message).join(", ")}`);
+        throw new Error(
+          `Validation failed: ${error.errors.map((e) => e.message).join(", ")}`
+        );
       }
       throw new Error("Invalid refund data");
     }
@@ -73,7 +80,7 @@ export class PaymentSecurity {
   static validateWebhookData(data: unknown) {
     try {
       return WebhookValidationSchema.parse(data);
-    } catch (error) {
+    } catch {
       throw new Error("Invalid webhook data");
     }
   }
@@ -93,7 +100,11 @@ export class PaymentSecurity {
   /**
    * Validate amount to prevent manipulation
    */
-  static validateAmount(amount: number, minAmount = 0.5, maxAmount = 100000): boolean {
+  static validateAmount(
+    amount: number,
+    minAmount = 0.5,
+    maxAmount = 100000
+  ): boolean {
     if (typeof amount !== "number" || isNaN(amount)) {
       throw new Error("Amount must be a valid number");
     }
@@ -198,10 +209,12 @@ export class PaymentSecurity {
         .update(payloadForSignature)
         .digest("hex");
 
-      return signatures.some(sig => crypto.timingSafeEqual(
-        Buffer.from(sig, "hex"),
-        Buffer.from(expectedSignature, "hex")
-      ));
+      return signatures.some((sig) =>
+        crypto.timingSafeEqual(
+          Buffer.from(sig, "hex"),
+          Buffer.from(expectedSignature, "hex")
+        )
+      );
     } catch (error) {
       console.error("Webhook signature verification failed:", error);
       return false;
@@ -211,10 +224,7 @@ export class PaymentSecurity {
   /**
    * Validate invoice ownership (ensure user can only pay their own invoices)
    */
-  static async validateInvoiceAccess(
-    invoiceId: string,
-    userId?: string
-  ): Promise<boolean> {
+  static async validateInvoiceAccess(invoiceId: string): Promise<boolean> {
     // In a real application, you would check if the user has access to this invoice
     // For now, we'll implement basic validation
     if (!invoiceId || typeof invoiceId !== "string") {
@@ -231,7 +241,7 @@ export class PaymentSecurity {
    */
   static logSecurityEvent(
     event: string,
-    details: Record<string, any>,
+    details: Record<string, unknown>,
     severity: "low" | "medium" | "high" = "medium"
   ): void {
     const logEntry = {
@@ -242,15 +252,17 @@ export class PaymentSecurity {
         ...details,
         // Remove sensitive data
         ...Object.keys(details).reduce((acc, key) => {
-          if (key.toLowerCase().includes("secret") || 
-              key.toLowerCase().includes("password") ||
-              key.toLowerCase().includes("token")) {
+          if (
+            key.toLowerCase().includes("secret") ||
+            key.toLowerCase().includes("password") ||
+            key.toLowerCase().includes("token")
+          ) {
             acc[key] = "[REDACTED]";
           } else {
             acc[key] = details[key];
           }
           return acc;
-        }, {} as Record<string, any>),
+        }, {} as Record<string, unknown>),
       },
     };
 
@@ -270,7 +282,11 @@ export class PaymentSecurity {
     cardExpMonth?: number;
     cardExpYear?: number;
   }): boolean {
-    if (!["CARD", "BANK_ACCOUNT", "PAYPAL", "APPLE_PAY", "GOOGLE_PAY"].includes(data.type)) {
+    if (
+      !["CARD", "BANK_ACCOUNT", "PAYPAL", "APPLE_PAY", "GOOGLE_PAY"].includes(
+        data.type
+      )
+    ) {
       throw new Error("Invalid payment method type");
     }
 
@@ -279,7 +295,10 @@ export class PaymentSecurity {
         throw new Error("Invalid card last 4 digits");
       }
 
-      if (data.cardExpMonth && (data.cardExpMonth < 1 || data.cardExpMonth > 12)) {
+      if (
+        data.cardExpMonth &&
+        (data.cardExpMonth < 1 || data.cardExpMonth > 12)
+      ) {
         throw new Error("Invalid card expiration month");
       }
 

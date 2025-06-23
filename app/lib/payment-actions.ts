@@ -109,7 +109,7 @@ export async function createStripePayment(
     PaymentSecurity.validateAmount(amount);
 
     // Validate invoice access
-    await PaymentSecurity.validateInvoiceAccess(invoiceId, session.user.id);
+    await PaymentSecurity.validateInvoiceAccess(invoiceId);
 
     // Sanitize inputs
     const sanitizedDescription = description
@@ -127,7 +127,7 @@ export async function createStripePayment(
     );
 
     // Create payment record in database
-    const payment = await PaymentService.createPaymentRecord({
+    await PaymentService.createPaymentRecord({
       invoiceId,
       amount,
       currency,
@@ -141,7 +141,7 @@ export async function createStripePayment(
     PaymentSecurity.logSecurityEvent(
       "PAYMENT_CREATED",
       {
-        paymentId: payment.id,
+        paymentId: paymentIntent.id,
         invoiceId,
         amount,
         method: "STRIPE",
@@ -167,7 +167,7 @@ export async function createStripePayment(
     let userEmail: string | undefined;
     try {
       const session = await auth();
-      userEmail = session?.user?.email;
+      userEmail = session?.user?.email || undefined;
     } catch {
       userEmail = undefined;
     }
@@ -229,7 +229,7 @@ export async function createPayPalPayment(
     );
 
     // Create payment record in database
-    const payment = await PaymentService.createPaymentRecord({
+    await PaymentService.createPaymentRecord({
       invoiceId,
       amount,
       currency,
@@ -254,7 +254,7 @@ export async function createPayPalPayment(
     let userEmail: string | undefined;
     try {
       const session = await auth();
-      userEmail = session?.user?.email;
+      userEmail = session?.user?.email || undefined;
     } catch {
       userEmail = undefined;
     }

@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-05-28.basil",
 });
 
 export interface PaymentIntent {
@@ -245,7 +245,7 @@ export class PaymentService {
       const refund = await stripe.refunds.create({
         payment_intent: paymentIntentId,
         amount: amount ? Math.round(amount * 100) : undefined,
-        reason: reason as any,
+        reason: reason as "duplicate" | "fraudulent" | "requested_by_customer",
       });
 
       return {

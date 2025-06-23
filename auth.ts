@@ -65,7 +65,7 @@ providers.push(
       try {
         // Query the database for the user using Prisma
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: credentials.email as string },
         });
 
         if (!user || !user.password) {
@@ -74,7 +74,7 @@ providers.push(
 
         // Verify password with bcrypt
         const isValidPassword = await bcrypt.compare(
-          credentials.password,
+          credentials.password as string,
           user.password
         );
 

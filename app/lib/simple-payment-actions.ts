@@ -40,7 +40,7 @@ export type PaymentState = {
 
 // Simplified Stripe Payment Intent Creation
 export async function createStripePayment(
-  prevState: PaymentState,
+  _prevState: PaymentState,
   formData: FormData
 ): Promise<PaymentState> {
   try {
@@ -82,7 +82,7 @@ export async function createStripePayment(
     );
 
     // Create payment record in database
-    const payment = await PaymentService.createPaymentRecord({
+    await PaymentService.createPaymentRecord({
       invoiceId,
       amount,
       currency,
@@ -112,7 +112,7 @@ export async function createStripePayment(
 
 // Simplified PayPal Order Creation
 export async function createPayPalPayment(
-  prevState: PaymentState,
+  _prevState: PaymentState,
   formData: FormData
 ): Promise<PaymentState> {
   try {
@@ -152,7 +152,7 @@ export async function createPayPalPayment(
         description || `Payment for invoice ${invoiceId}`
       );
 
-      const payment = await PaymentService.createPaymentRecord({
+      await PaymentService.createPaymentRecord({
         invoiceId,
         amount,
         currency,
@@ -178,7 +178,7 @@ export async function createPayPalPayment(
         }`,
       };
     }
-  } catch (error) {
+  } catch {
     return {
       message: "Failed to create PayPal payment. Please try again.",
     };
@@ -212,7 +212,7 @@ export async function confirmStripePayment(paymentIntentId: string) {
 
     revalidatePath("/dashboard/invoices");
     return { success: true, status: paymentIntent.status };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to confirm payment" };
   }
 }

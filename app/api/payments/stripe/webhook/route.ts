@@ -1,9 +1,10 @@
+import { PaymentSecurity } from "@/app/lib/payment-security";
 import { PaymentService } from "@/app/lib/payment-service";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-05-28.basil",
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -47,11 +48,12 @@ export async function POST(req: NextRequest) {
 
     // Validate webhook data structure
     PaymentSecurity.validateWebhookData(event);
-  } catch (err: any) {
-    console.error("Webhook signature verification failed:", err.message);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error("Webhook signature verification failed:", errorMessage);
     PaymentSecurity.logSecurityEvent(
       "WEBHOOK_PROCESSING_ERROR",
-      { error: err.message, ip: clientIP },
+      { error: errorMessage, ip: clientIP },
       "medium"
     );
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -142,7 +144,7 @@ async function handlePaymentRequiresAction(
     );
 
     if (payment) {
-      await PaymentService.updatePaymentStatus(payment.id, "REQUIRES_ACTION");
+      await PaymentService.updatePaymentStatus(payment.id, "PROCESSING");
       console.log(`Payment ${payment.id} requires action`);
     }
   } catch (error) {

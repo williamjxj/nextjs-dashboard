@@ -13,7 +13,7 @@ import { Suspense } from "react";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 }) {
   // If already signed in, redirect to dashboard
   const session = await auth();

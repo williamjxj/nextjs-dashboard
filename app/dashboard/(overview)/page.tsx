@@ -1,25 +1,24 @@
-import CardWrapper, { Card } from '@/app/ui/dashboard/cards';
-import RevenueChart from '@/app/ui/dashboard/revenue-chart';
-import LatestInvoices from '@/app/ui/dashboard/latest-invoices';
-import { lusitana } from '@/app/ui/fonts';
+import CardWrapper from "@/app/ui/dashboard/cards";
+import LatestInvoices from "@/app/ui/dashboard/latest-invoices";
+import RevenueChart from "@/app/ui/dashboard/revenue-chart";
+import { lusitana } from "@/app/ui/fonts";
 // import { fetchRevenue, fetchLatestInvoices, fetchCardData } from '@/app/lib/data';
-import { Suspense } from 'react';
-import { 
-  RevenueChartSkeleton, 
-  LatestInvoicesSkeleton, CardsSkeleton 
-} from '@/app/ui/skeletons';
-  
- 
-export default async function Page() {
+import {
+  CardsSkeleton,
+  LatestInvoicesSkeleton,
+  RevenueChartSkeleton,
+} from "@/app/ui/skeletons";
+import { Suspense } from "react";
 
-  // const {       
+export default async function Page() {
+  // const {
   //   numberOfCustomers,
   //   numberOfInvoices,
   //   totalPaidInvoices,
   //   totalPendingInvoices} = await fetchCardData()
 
-    // const revenue = await fetchRevenue() // use either Suspense or loading.jsx
-    // const latestInvoices = await fetchLatestInvoices()
+  // const revenue = await fetchRevenue() // use either Suspense or loading.jsx
+  // const latestInvoices = await fetchLatestInvoices()
 
   return (
     <main>

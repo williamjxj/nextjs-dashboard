@@ -15,7 +15,8 @@ interface PaymentStatusProps {
     | "SUCCEEDED"
     | "FAILED"
     | "CANCELLED"
-    | "REQUIRES_ACTION";
+    | "REQUIRES_ACTION"
+    | "REQUIRES_CONFIRMATION";
   amount?: number;
   currency?: string;
   paymentMethod?: "STRIPE" | "PAYPAL" | "BANK_TRANSFER" | "CASH";
@@ -77,6 +78,15 @@ export default function PaymentStatus({
           borderColor: "border-yellow-200",
           label: "Action Required",
           description: "Additional verification needed",
+        };
+      case "REQUIRES_CONFIRMATION":
+        return {
+          icon: ExclamationTriangleIcon,
+          color: "text-orange-600",
+          bgColor: "bg-orange-100",
+          borderColor: "border-orange-200",
+          label: "Confirmation Required",
+          description: "Payment needs confirmation",
         };
       case "PENDING":
       default:
