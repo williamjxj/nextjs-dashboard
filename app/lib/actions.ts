@@ -1,13 +1,13 @@
 "use server";
 
+import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import postgres from "postgres";
 import { z } from "zod";
 // Authentication is now handled in auth-actions.ts
 // This file is kept for other dashboard-related actions
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: false });
+const prisma = new PrismaClient();
 
 const FormSchema = z.object({
   id: z.string(),
@@ -36,15 +36,23 @@ export async function createInvoice(formData: FormData) {
     status: formData.get("status"),
   });
   const amountInCents = amount * 100;
-  const date = new Date().toISOString().split("T")[0];
 
-  await sql`
-      INSERT INTO invoices (customer_id, amount, status, date)
-      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
-    `;
+  try {
+    await prisma.invoice.create({
+      data: {
+        customerId,
+        amount: amountInCents,
+        status,
+        date: new Date(),
+      },
+    });
 
-  revalidatePath("/dashboard/invoices");
-  redirect("/dashboard/invoices");
+    revalidatePath("/dashboard/invoices");
+    redirect("/dashboard/invoices");
+  } catch (error) {
+    console.error("Failed to create invoice:", error);
+    throw new Error("Failed to create invoice");
+  }
 }
 
 export async function updateInvoice(id: string, formData: FormData) {
@@ -56,27 +64,59 @@ export async function updateInvoice(id: string, formData: FormData) {
 
   const amountInCents = amount * 100;
 
-  await sql`
-      UPDATE invoices
-      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
-      WHERE id = ${id}
-    `;
+  try {
+    await prisma.invoice.update({
+      where: { id },
+      data: {
+        customerId,
+        amount: amountInCents,
+        status,
+      },
+    });
 
-  revalidatePath("/dashboard/invoices");
-  redirect("/dashboard/invoices");
+    revalidatePath("/dashboard/invoices");
+    redirect("/dashboard/invoices");
+  } catch (error) {
+    console.error("Failed to update invoice:", error);
+    throw new Error("Failed to update invoice");
+  }
 }
 
 export async function deleteInvoice(id: string) {
-  await sql`DELETE FROM invoices WHERE id = ${id}`;
+  try {
+    await prisma.invoice.delete({
+      where: { id },
+    });
 
-  revalidatePath("/dashboard/invoices");
+    revalidatePath("/dashboard/invoices");
+  } catch (error) {
+    console.error("Failed to delete invoice:", error);
+    throw new Error("Failed to delete invoice");
+  }
 }
 
 export async function getInvoice(id: string) {
-  const invoice = await sql`SELECT * FROM invoices WHERE id = ${id}`;
-  return invoice[0];
+  try {
+    const invoice = await prisma.invoice.findUnique({
+      where: { id },
+      include: { customer: true },
+    });
+    return invoice;
+  } catch (error) {
+    console.error("Failed to fetch invoice:", error);
+    throw new Error("Failed to fetch invoice");
+  }
 }
+
 export async function getInvoices() {
-  const invoices = await sql`SELECT * FROM invoices`;
-  return invoices;
+  try {
+    const invoices = await prisma.invoice.findMany({
+      include: { customer: true },
+      orderBy: { date: "desc" },
+    });
+    return invoices;
+  } catch (error) {
+    console.error("Failed to fetch invoices:", error);
+    throw new Error("Failed to fetch invoices");
+  }
 }

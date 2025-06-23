@@ -65,11 +65,12 @@ model VerificationToken {
 
 // Dashboard tables
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  image_url String
-  invoices  Invoice[]
+  id             String          @id @default(cuid())
+  name           String
+  email          String
+  image_url      String
+  invoices       Invoice[]
+  paymentMethods PaymentMethod[]
 
   @@map("customers")
 }
@@ -78,11 +79,25 @@ model Invoice {
   id         String   @id @default(cuid())
   customerId String   @map("customer_id")
   amount     Int
-  status     String   // 'pending' or 'paid'
+  status     InvoiceStatus @default(PENDING)
   date       DateTime
+  dueDate    DateTime? @map("due_date")
+  description String?
+  notes      String?
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  payments   Payment[]
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELLED
 }
 
 model Revenue {
@@ -90,4 +105,127 @@ model Revenue {
   revenue Int
 
   @@map("revenue")
-} 
+}
+
+// Payment System Models
+model Payment {
+  id                String        @id @default(cuid())
+  invoiceId         String        @map("invoice_id")
+  amount            Int           // Amount in cents
+  currency          String        @default("USD")
+  status            PaymentStatus @default(PENDING)
+  paymentMethod     PaymentProvider @default(STRIPE)
+
+  // Provider-specific IDs
+  stripePaymentIntentId String? @map("stripe_payment_intent_id")
+  stripeChargeId        String? @map("stripe_charge_id")
+  paypalOrderId         String? @map("paypal_order_id")
+  paypalCaptureId       String? @map("paypal_capture_id")
+
+  // Payment details
+  description       String?
+  receiptEmail      String? @map("receipt_email")
+  receiptUrl        String? @map("receipt_url")
+  failureReason     String? @map("failure_reason")
+
+  // Metadata
+  metadata          Json?
+
+  // Relationships
+  invoice           Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  refunds           Refund[]
+
+  // Timestamps
+  paidAt            DateTime? @map("paid_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+model Refund {
+  id                String       @id @default(cuid())
+  paymentId         String       @map("payment_id")
+  amount            Int          // Amount in cents
+  currency          String       @default("USD")
+  status            RefundStatus @default(PENDING)
+  reason            String?
+
+  // Provider-specific IDs
+  stripeRefundId    String? @map("stripe_refund_id")
+  paypalRefundId    String? @map("paypal_refund_id")
+
+  // Metadata
+  metadata          Json?
+
+  // Relationships
+  payment           Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  processedAt       DateTime? @map("processed_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("refunds")
+}
+
+model PaymentMethod {
+  id                String              @id @default(cuid())
+  customerId        String              @map("customer_id")
+  type              PaymentMethodType
+  isDefault         Boolean             @default(false) @map("is_default")
+
+  // Card details (for Stripe)
+  cardLast4         String?             @map("card_last4")
+  cardBrand         String?             @map("card_brand")
+  cardExpMonth      Int?                @map("card_exp_month")
+  cardExpYear       Int?                @map("card_exp_year")
+
+  // Provider-specific IDs
+  stripePaymentMethodId String?         @map("stripe_payment_method_id")
+  paypalPaymentMethodId String?         @map("paypal_payment_method_id")
+
+  // Metadata
+  metadata          Json?
+
+  // Relationships
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_methods")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REQUIRES_ACTION
+  REQUIRES_CONFIRMATION
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  BANK_TRANSFER
+  CASH
+}
+
+enum PaymentMethodType {
+  CARD
+  BANK_ACCOUNT
+  PAYPAL
+  APPLE_PAY
+  GOOGLE_PAY
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}

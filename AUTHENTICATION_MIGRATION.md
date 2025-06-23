@@ -58,7 +58,7 @@ Successfully migrated the NextJS Dashboard application from basic NextAuth.js cr
 # NextAuth.js Configuration
 AUTH_SECRET=your-super-secret-key-at-least-32-characters-long
 AUTH_TRUST_HOST=true
-NEXTAUTH_URL=http://localhost:3001
+NEXTAUTH_URL=http://localhost:3000
 
 # OAuth Providers (optional)
 AUTH_GITHUB_ID=your-github-client-id
@@ -97,15 +97,15 @@ AUTH_MICROSOFT_SECRET=your-microsoft-client-secret
 ### OAuth Provider Setup (Optional)
 1. **GitHub OAuth**:
    - Create GitHub App at https://github.com/settings/developers
-   - Set callback URL: `http://localhost:3001/api/auth/callback/github`
+   - Set callback URL: `http://localhost:3000/api/auth/callback/github`
 
 2. **Google OAuth**:
    - Create project at https://console.developers.google.com
-   - Set callback URL: `http://localhost:3001/api/auth/callback/google`
+   - Set callback URL: `http://localhost:3000/api/auth/callback/google`
 
 3. **Microsoft OAuth**:
    - Create app at https://portal.azure.com
-   - Set callback URL: `http://localhost:3001/api/auth/callback/microsoft-entra-id`
+   - Set callback URL: `http://localhost:3000/api/auth/callback/microsoft-entra-id`
 
 ### Production Deployment
 1. Set secure `AUTH_SECRET` (generate with `openssl rand -base64 32`)

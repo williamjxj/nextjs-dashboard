@@ -1,8 +1,13 @@
-import Image from 'next/image';
-import { UpdateInvoice, DeleteInvoice } from '@/app/ui/invoices/buttons';
-import InvoiceStatus from '@/app/ui/invoices/status';
-import { formatDateToLocal, formatCurrency } from '@/app/lib/utils';
-import { fetchFilteredInvoices } from '@/app/lib/data';
+import { fetchFilteredInvoices } from "@/app/lib/data";
+import { formatCurrency, formatDateToLocal } from "@/app/lib/utils";
+import {
+  DeleteInvoice,
+  PayInvoice,
+  UpdateInvoice,
+  ViewInvoice,
+} from "@/app/ui/invoices/buttons";
+import InvoiceStatus from "@/app/ui/invoices/status";
+import Image from "next/image";
 
 export default async function InvoicesTable({
   query,
@@ -47,6 +52,8 @@ export default async function InvoicesTable({
                     <p>{formatDateToLocal(invoice.date)}</p>
                   </div>
                   <div className="flex justify-end gap-2">
+                    <ViewInvoice id={invoice.id} />
+                    <PayInvoice id={invoice.id} status={invoice.status} />
                     <UpdateInvoice id={invoice.id} />
                     <DeleteInvoice id={invoice.id} />
                   </div>
@@ -108,7 +115,9 @@ export default async function InvoicesTable({
                     <InvoiceStatus status={invoice.status} />
                   </td>
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
-                    <div className="flex justify-end gap-3">
+                    <div className="flex justify-end gap-2">
+                      <ViewInvoice id={invoice.id} />
+                      <PayInvoice id={invoice.id} status={invoice.status} />
                       <UpdateInvoice id={invoice.id} />
                       <DeleteInvoice id={invoice.id} />
                     </div>
