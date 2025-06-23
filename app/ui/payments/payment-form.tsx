@@ -3,14 +3,15 @@
 import {
   createPayPalPayment,
   createStripePayment,
-} from "@/app/lib/payment-actions";
+} from "@/app/lib/mock-payment-actions";
 import { Button } from "@/app/ui/button";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import Link from "next/link";
+import { useActionState, useState, useTransition } from "react";
+import MockStripePaymentForm from "./mock-stripe-payment-form";
 import PaymentMethodSelector from "./payment-method-selector";
 import PaymentStatus from "./payment-status";
 import PayPalPaymentForm from "./paypal-payment-form";
-import StripePaymentForm from "./stripe-payment-form";
 
 interface PaymentFormProps {
   invoiceId: string;
@@ -35,6 +36,7 @@ export default function PaymentForm({
   >("select");
   const [paymentData, setPaymentData] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const [stripeState, stripeAction] = useActionState(createStripePayment, {
     errors: {},
@@ -65,30 +67,32 @@ export default function PaymentForm({
       formData.append("receiptEmail", customerEmail);
     }
 
-    try {
-      if (selectedMethod === "STRIPE") {
-        const result = await stripeAction(formData);
-        if (result.success && result.paymentIntent) {
-          setPaymentData(result.paymentIntent);
-          setPaymentStep("pay");
-        } else {
-          setErrorMessage(result.message || "Failed to create payment");
-          setPaymentStep("error");
+    startTransition(async () => {
+      try {
+        if (selectedMethod === "STRIPE") {
+          const result = await stripeAction(formData);
+          if (result.success && result.paymentIntent) {
+            setPaymentData(result.paymentIntent);
+            setPaymentStep("pay");
+          } else {
+            setErrorMessage(result.message || "Failed to create payment");
+            setPaymentStep("error");
+          }
+        } else if (selectedMethod === "PAYPAL") {
+          const result = await paypalAction(formData);
+          if (result.success && result.paypalOrder) {
+            setPaymentData(result.paypalOrder);
+            setPaymentStep("pay");
+          } else {
+            setErrorMessage(result.message || "Failed to create PayPal order");
+            setPaymentStep("error");
+          }
         }
-      } else if (selectedMethod === "PAYPAL") {
-        const result = await paypalAction(formData);
-        if (result.success && result.paypalOrder) {
-          setPaymentData(result.paypalOrder);
-          setPaymentStep("pay");
-        } else {
-          setErrorMessage(result.message || "Failed to create PayPal order");
-          setPaymentStep("error");
-        }
+      } catch (error) {
+        setErrorMessage("An unexpected error occurred");
+        setPaymentStep("error");
       }
-    } catch (error) {
-      setErrorMessage("An unexpected error occurred");
-      setPaymentStep("error");
-    }
+    });
   };
 
   const handlePaymentSuccess = () => {
@@ -161,10 +165,18 @@ export default function PaymentForm({
 
           {selectedMethod && (
             <div className="flex space-x-3">
-              <Button onClick={handleProceedToPayment} className="flex-1">
-                Continue to Payment
+              <Button
+                onClick={handleProceedToPayment}
+                className="flex-1"
+                disabled={isPending}
+              >
+                {isPending ? "Processing..." : "Continue to Payment"}
               </Button>
-              <Button variant="outline" onClick={handleCancel}>
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isPending}
+              >
                 Cancel
               </Button>
             </div>
@@ -186,7 +198,7 @@ export default function PaymentForm({
             </h3>
           </div>
 
-          <StripePaymentForm
+          <MockStripePaymentForm
             clientSecret={paymentData.clientSecret}
             amount={paymentData.amount}
             currency={paymentData.currency}

@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
 import { Button } from "@/app/ui/button";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import {
+  CardElement,
+  Elements,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { useState } from "react";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+);
+
+// Debug logging
+console.log(
+  "Stripe publishable key:",
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.slice(0, 20) + "..."
+);
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -52,24 +60,47 @@ function PaymentForm({
     }
 
     try {
-      const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
+      console.log(
+        "Attempting payment with client secret:",
+        clientSecret?.slice(0, 20) + "..."
+      );
+
+      const { error: confirmError, paymentIntent } =
+        await stripe.confirmCardPayment(clientSecret, {
           payment_method: {
             card: cardElement,
           },
-        }
-      );
+        });
+
+      console.log("Payment result:", {
+        confirmError,
+        paymentIntentStatus: paymentIntent?.status,
+      });
 
       if (confirmError) {
+        console.error("Stripe payment error:", confirmError);
         setError(confirmError.message || "Payment failed");
         onError(confirmError.message || "Payment failed");
       } else if (paymentIntent?.status === "succeeded") {
+        console.log("Payment succeeded!");
         onSuccess();
+      } else {
+        console.log("Payment status:", paymentIntent?.status);
+        setError(`Payment status: ${paymentIntent?.status}`);
+        onError(`Payment status: ${paymentIntent?.status}`);
       }
     } catch (err) {
-      setError("An unexpected error occurred");
-      onError("An unexpected error occurred");
+      console.error("Unexpected payment error:", err);
+      setError(
+        `An unexpected error occurred: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
+      onError(
+        `An unexpected error occurred: ${
+          err instanceof Error ? err.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +157,9 @@ function PaymentForm({
 
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-gray-700">Total Amount:</span>
+          <span className="text-sm font-medium text-gray-700">
+            Total Amount:
+          </span>
           <span className="text-lg font-bold text-gray-900">
             {new Intl.NumberFormat("en-US", {
               style: "currency",
@@ -136,11 +169,7 @@ function PaymentForm({
         </div>
       </div>
 
-      <Button
-        type="submit"
-        disabled={!stripe || isLoading}
-        className="w-full"
-      >
+      <Button type="submit" disabled={!stripe || isLoading} className="w-full">
         {isLoading ? (
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

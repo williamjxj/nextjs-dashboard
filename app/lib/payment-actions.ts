@@ -1,7 +1,9 @@
 "use server";
 
+import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { PaymentSecurity } from "./payment-security";
 import { PaymentService } from "./payment-service";
 
 // Validation schemas
@@ -161,13 +163,22 @@ export async function createStripePayment(
   } catch (error) {
     console.error("Stripe payment creation failed:", error);
 
+    // Get session for error logging
+    let userEmail: string | undefined;
+    try {
+      const session = await auth();
+      userEmail = session?.user?.email;
+    } catch {
+      userEmail = undefined;
+    }
+
     // Log security event for failed payment
     PaymentSecurity.logSecurityEvent(
       "PAYMENT_CREATION_FAILED",
       {
         error: error instanceof Error ? error.message : "Unknown error",
         invoiceId: formData.get("invoiceId"),
-        user: session?.user?.email,
+        user: userEmail,
       },
       "medium"
     );
@@ -183,26 +194,33 @@ export async function createPayPalPayment(
   prevState: PaymentState,
   formData: FormData
 ): Promise<PaymentState> {
-  const validatedFields = PaymentSchema.safeParse({
-    invoiceId: formData.get("invoiceId"),
-    amount: formData.get("amount"),
-    paymentMethod: "PAYPAL",
-    currency: formData.get("currency") || "USD",
-    description: formData.get("description"),
-    receiptEmail: formData.get("receiptEmail"),
-  });
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: "Missing or invalid fields. Failed to create payment.",
-    };
-  }
-
-  const { invoiceId, amount, currency, description, receiptEmail } =
-    validatedFields.data;
-
   try {
+    // Authentication check
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        message: "Authentication required. Please sign in.",
+      };
+    }
+
+    const validatedFields = PaymentSchema.safeParse({
+      invoiceId: formData.get("invoiceId"),
+      amount: formData.get("amount"),
+      paymentMethod: "PAYPAL",
+      currency: formData.get("currency") || "USD",
+      description: formData.get("description"),
+      receiptEmail: formData.get("receiptEmail"),
+    });
+
+    if (!validatedFields.success) {
+      return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        message: "Missing or invalid fields. Failed to create payment.",
+      };
+    }
+
+    const { invoiceId, amount, currency, description, receiptEmail } =
+      validatedFields.data;
     // Create PayPal Order
     const paypalOrder = await PaymentService.createPayPalOrder(
       amount,
@@ -231,6 +249,28 @@ export async function createPayPalPayment(
     };
   } catch (error) {
     console.error("PayPal payment creation failed:", error);
+
+    // Get session for error logging
+    let userEmail: string | undefined;
+    try {
+      const session = await auth();
+      userEmail = session?.user?.email;
+    } catch {
+      userEmail = undefined;
+    }
+
+    // Log security event for failed payment
+    PaymentSecurity.logSecurityEvent(
+      "PAYMENT_CREATION_FAILED",
+      {
+        error: error instanceof Error ? error.message : "Unknown error",
+        invoiceId: formData.get("invoiceId"),
+        user: userEmail,
+        method: "PAYPAL",
+      },
+      "medium"
+    );
+
     return {
       message: "Failed to create PayPal payment. Please try again.",
     };
