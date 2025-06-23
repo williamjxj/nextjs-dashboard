@@ -40,28 +40,12 @@ export default function PaymentForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
-  // Debug current state
-  console.log("🔧 PaymentForm state:", {
-    selectedMethod,
-    paymentStep,
-    hasPaymentData: !!paymentData,
-    errorMessage,
-    isPending,
-  });
-
   const handleMethodSelect = (method: "STRIPE" | "PAYPAL") => {
     setSelectedMethod(method);
   };
 
   const handleProceedToPayment = async () => {
     if (!selectedMethod) return;
-
-    console.log("🚀 Proceeding to payment:", {
-      selectedMethod,
-      invoiceId,
-      amount,
-      currency,
-    });
 
     setIsPending(true);
     setErrorMessage(null);
@@ -80,36 +64,27 @@ export default function PaymentForm({
 
     try {
       if (selectedMethod === "STRIPE") {
-        console.log("💳 Creating Stripe payment...");
         const result = await createStripePayment({}, formData);
-        console.log("💳 Stripe payment result:", result);
 
         if (result.success && result.paymentIntent) {
-          console.log("✅ Payment intent created, moving to pay step");
           setPaymentData(result.paymentIntent);
           setPaymentStep("pay");
         } else {
-          console.error("❌ Failed to create payment:", result.message);
           setErrorMessage(result.message || "Failed to create payment");
           setPaymentStep("error");
         }
       } else if (selectedMethod === "PAYPAL") {
-        console.log("🟡 Creating PayPal payment...");
         const result = await createPayPalPayment({}, formData);
-        console.log("🟡 PayPal payment result:", result);
 
         if (result.success && result.paypalOrder) {
-          console.log("✅ PayPal order created, moving to pay step");
           setPaymentData(result.paypalOrder);
           setPaymentStep("pay");
         } else {
-          console.error("❌ Failed to create PayPal order:", result.message);
           setErrorMessage(result.message || "Failed to create PayPal order");
           setPaymentStep("error");
         }
       }
     } catch (error) {
-      console.error("❌ Unexpected error:", error);
       setErrorMessage("An unexpected error occurred");
       setPaymentStep("error");
     } finally {
@@ -118,61 +93,30 @@ export default function PaymentForm({
   };
 
   const handlePaymentSuccess = () => {
-    console.log("✅ Payment success callback triggered");
-    try {
-      setPaymentStep("success");
-      // Auto-redirect after 3 seconds or when user clicks continue
-      setTimeout(() => {
-        console.log("🔄 Auto-redirecting to invoice page");
-        router.push(`/dashboard/invoices/${invoiceId}`);
-      }, 3000);
-    } catch (error) {
-      console.error("❌ Error in payment success callback:", error);
-    }
+    setPaymentStep("success");
+    setTimeout(() => {
+      router.push(`/dashboard/invoices/${invoiceId}`);
+    }, 3000);
   };
 
   const handlePaymentError = (error: string) => {
-    console.log("❌ Payment error callback triggered:", error);
-    try {
-      setErrorMessage(error);
-      setPaymentStep("error");
-    } catch (err) {
-      console.error("❌ Error in payment error callback:", err);
-    }
+    setErrorMessage(error);
+    setPaymentStep("error");
   };
 
   const handleBackToSelect = () => {
-    console.log("🔄 Going back to payment method selection");
-    try {
-      setPaymentStep("select");
-      setSelectedMethod(null);
-      setPaymentData(null);
-      setErrorMessage(null);
-    } catch (error) {
-      console.error("❌ Error in back to select callback:", error);
-    }
+    setPaymentStep("select");
+    setSelectedMethod(null);
+    setPaymentData(null);
+    setErrorMessage(null);
   };
 
   const handleCancel = () => {
-    console.log("❌ Payment cancelled, redirecting to invoice");
-    try {
-      router.push(`/dashboard/invoices/${invoiceId}`);
-    } catch (error) {
-      console.error("❌ Error in cancel callback:", error);
-      // Fallback to window.location if router fails
-      window.location.href = `/dashboard/invoices/${invoiceId}`;
-    }
+    router.push(`/dashboard/invoices/${invoiceId}`);
   };
 
   const handleContinueAfterSuccess = () => {
-    console.log("✅ Continue after success, redirecting to invoice");
-    try {
-      router.push(`/dashboard/invoices/${invoiceId}`);
-    } catch (error) {
-      console.error("❌ Error in continue callback:", error);
-      // Fallback to window.location if router fails
-      window.location.href = `/dashboard/invoices/${invoiceId}`;
-    }
+    router.push(`/dashboard/invoices/${invoiceId}`);
   };
 
   const formatAmount = (amount: number) => {

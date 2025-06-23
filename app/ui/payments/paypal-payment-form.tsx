@@ -19,14 +19,6 @@ export default function PayPalPaymentForm({
   onError,
   onCancel,
 }: PayPalPaymentFormProps) {
-  // Debug logging
-  console.log("🟡 PayPal form rendered with:", {
-    orderId,
-    amount,
-    currency,
-    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID?.slice(0, 20) + "...",
-  });
-
   const initialOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
     currency: currency.toUpperCase(),
@@ -34,23 +26,12 @@ export default function PayPalPaymentForm({
     components: "buttons" as const,
   };
 
-  // Debug PayPal options
-  console.log("🟡 PayPal options:", initialOptions);
-
   const createOrder = () => {
-    console.log("Creating PayPal order with ID:", orderId);
-    // Return the existing order ID
     return Promise.resolve(orderId);
   };
 
   const onApprove = async (data: any) => {
-    console.log("PayPal payment approved. Data:", data);
     try {
-      // Call our server to capture the payment
-      console.log(
-        "Sending request to capture payment for orderId:",
-        data.orderID
-      );
       const response = await fetch("/api/payments/paypal/capture", {
         method: "POST",
         headers: {
@@ -61,29 +42,23 @@ export default function PayPalPaymentForm({
         }),
       });
 
-      console.log("Capture request response status:", response.status);
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Failed to capture payment. Server response:", errorText);
         throw new Error(`Failed to capture payment: ${errorText}`);
       }
 
       const details = await response.json();
-      console.log("Payment captured successfully. Details:", details);
       onSuccess(details);
     } catch (error) {
-      console.error("PayPal capture error:", error);
       onError("Failed to complete payment. Please try again.");
     }
   };
 
-  const onErrorHandler = (err: any) => {
-    console.error("PayPal error:", err);
+  const onErrorHandler = () => {
     onError("PayPal payment failed. Please try again.");
   };
 
   const onCancelHandler = () => {
-    console.log("PayPal payment cancelled by user.");
     if (onCancel) {
       onCancel();
     }

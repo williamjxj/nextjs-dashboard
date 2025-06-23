@@ -11,28 +11,9 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { useState } from "react";
 
-// Debug logging for Stripe key
-console.log(
-  "🔑 Stripe publishable key:",
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.slice(0, 20) + "..."
-);
-
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
-
-// Debug Stripe promise
-stripePromise
-  .then((stripe) => {
-    if (stripe) {
-      console.log("✅ Stripe loaded successfully");
-    } else {
-      console.error("❌ Failed to load Stripe");
-    }
-  })
-  .catch((error) => {
-    console.error("❌ Stripe loading error:", error);
-  });
 
 interface ModernStripePaymentFormProps {
   clientSecret: string;
@@ -54,15 +35,6 @@ function PaymentForm({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Debug logging
-  console.log("🔧 PaymentForm rendered:", {
-    hasStripe: !!stripe,
-    hasElements: !!elements,
-    clientSecret: clientSecret?.slice(0, 20) + "...",
-    amount,
-    currency,
-  });
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -74,22 +46,14 @@ function PaymentForm({
     setError(null);
 
     try {
-      console.log(
-        "🔄 Processing payment with client secret:",
-        clientSecret?.slice(0, 20) + "..."
-      );
-
       // Trigger form validation and wallet collection
       const { error: submitError } = await elements.submit();
       if (submitError) {
-        console.error("❌ Form validation error:", submitError);
         setError(submitError.message || "Form validation failed");
         onError(submitError.message || "Form validation failed");
         setIsLoading(false);
         return;
       }
-
-      console.log("✅ Form validation passed, confirming payment...");
 
       // Confirm the payment with the client secret
       const { error: confirmError } = await stripe.confirmPayment({
@@ -101,18 +65,13 @@ function PaymentForm({
         redirect: "if_required", // Only redirect if required by payment method
       });
 
-      console.log("Payment confirmation result:", { confirmError });
-
       if (confirmError) {
-        console.error("❌ Payment confirmation error:", confirmError);
         setError(confirmError.message || "Payment confirmation failed");
         onError(confirmError.message || "Payment confirmation failed");
       } else {
-        console.log("✅ Payment succeeded!");
         onSuccess();
       }
     } catch (err) {
-      console.error("❌ Unexpected payment error:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error occurred";
       setError(`An unexpected error occurred: ${errorMessage}`);

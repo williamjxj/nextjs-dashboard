@@ -92,8 +92,6 @@ export async function createStripePayment(
       receiptEmail,
     });
 
-    console.log(`✅ Stripe payment created: ${payment.id}`);
-
     return {
       success: true,
       message: "Payment intent created successfully",
@@ -145,8 +143,7 @@ export async function createPayPalPayment(
     const { invoiceId, amount, currency, description, receiptEmail } =
       validatedFields.data;
 
-    // Create PayPal order with proper credentials
-    console.log("🟡 Creating PayPal order...");
+    // Create PayPal order
 
     try {
       const paypalOrder = await PaymentService.createPayPalOrder(
@@ -154,8 +151,6 @@ export async function createPayPalPayment(
         currency,
         description || `Payment for invoice ${invoiceId}`
       );
-
-      console.log("✅ PayPal order created:", paypalOrder.id);
 
       const payment = await PaymentService.createPaymentRecord({
         invoiceId,
@@ -167,8 +162,6 @@ export async function createPayPalPayment(
         receiptEmail,
       });
 
-      console.log("✅ PayPal payment record created:", payment.id);
-
       return {
         success: true,
         message: "PayPal order created successfully",
@@ -178,7 +171,6 @@ export async function createPayPalPayment(
         },
       };
     } catch (paypalError) {
-      console.error("❌ PayPal order creation failed:", paypalError);
       return {
         success: false,
         message: `PayPal order creation failed: ${
@@ -187,7 +179,6 @@ export async function createPayPalPayment(
       };
     }
   } catch (error) {
-    console.error("PayPal payment creation failed:", error);
     return {
       message: "Failed to create PayPal payment. Please try again.",
     };
@@ -222,7 +213,6 @@ export async function confirmStripePayment(paymentIntentId: string) {
     revalidatePath("/dashboard/invoices");
     return { success: true, status: paymentIntent.status };
   } catch (error) {
-    console.error("Payment confirmation failed:", error);
     return { success: false, error: "Failed to confirm payment" };
   }
 }
