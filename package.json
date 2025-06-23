@@ -4,14 +4,20 @@
     "build": "next build",
     "dev": "next dev --turbopack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.9.1",
     "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^6.9.0",
     "@tailwindcss/forms": "^0.5.10",
     "autoprefixer": "10.4.20",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.513.0",
     "next": "15.4.0-canary.17",
     "next-auth": "5.0.0-beta.27",
     "postcss": "8.5.1",
@@ -29,6 +35,7 @@
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
     "eslint": "^9.25.1",
-    "eslint-config-next": "15.3.1"
+    "eslint-config-next": "15.3.1",
+    "prisma": "^6.9.0"
   }
 }

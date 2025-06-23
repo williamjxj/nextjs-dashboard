@@ -14,4 +14,6 @@ async function testConnection() {
   }
 }
 
-testConnection();
+testConnection().finally(() => {
+  sql.end();
+})
