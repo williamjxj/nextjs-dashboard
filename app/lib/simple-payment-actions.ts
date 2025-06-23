@@ -1,8 +1,8 @@
 "use server";
 
+import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { PaymentService } from "./payment-service";
 
 // Simplified validation schemas
@@ -145,41 +145,47 @@ export async function createPayPalPayment(
     const { invoiceId, amount, currency, description, receiptEmail } =
       validatedFields.data;
 
-    // For now, return a mock PayPal order since credentials need setup
-    console.log("⚠️ PayPal payment attempted - using mock response");
-    
-    return {
-      success: false,
-      message: "PayPal payments are currently unavailable. Please use Stripe instead.",
-    };
+    // Create PayPal order with proper credentials
+    console.log("🟡 Creating PayPal order...");
 
-    // Uncomment when PayPal credentials are properly configured:
-    /*
-    const paypalOrder = await PaymentService.createPayPalOrder(
-      amount,
-      currency,
-      description || `Payment for invoice ${invoiceId}`
-    );
+    try {
+      const paypalOrder = await PaymentService.createPayPalOrder(
+        amount,
+        currency,
+        description || `Payment for invoice ${invoiceId}`
+      );
 
-    const payment = await PaymentService.createPaymentRecord({
-      invoiceId,
-      amount,
-      currency,
-      paymentMethod: "PAYPAL",
-      paypalOrderId: paypalOrder.id,
-      description,
-      receiptEmail,
-    });
+      console.log("✅ PayPal order created:", paypalOrder.id);
 
-    return {
-      success: true,
-      message: "PayPal order created successfully",
-      paypalOrder: {
-        id: paypalOrder.id,
-        status: paypalOrder.status,
-      },
-    };
-    */
+      const payment = await PaymentService.createPaymentRecord({
+        invoiceId,
+        amount,
+        currency,
+        paymentMethod: "PAYPAL",
+        paypalOrderId: paypalOrder.id,
+        description,
+        receiptEmail,
+      });
+
+      console.log("✅ PayPal payment record created:", payment.id);
+
+      return {
+        success: true,
+        message: "PayPal order created successfully",
+        paypalOrder: {
+          id: paypalOrder.id,
+          status: paypalOrder.status,
+        },
+      };
+    } catch (paypalError) {
+      console.error("❌ PayPal order creation failed:", paypalError);
+      return {
+        success: false,
+        message: `PayPal order creation failed: ${
+          paypalError instanceof Error ? paypalError.message : "Unknown error"
+        }`,
+      };
+    }
   } catch (error) {
     console.error("PayPal payment creation failed:", error);
     return {

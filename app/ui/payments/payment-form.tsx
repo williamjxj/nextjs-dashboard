@@ -3,12 +3,13 @@
 import {
   createPayPalPayment,
   createStripePayment,
-} from "@/app/lib/mock-payment-actions";
+} from "@/app/lib/simple-payment-actions";
 import { Button } from "@/app/ui/button";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { useActionState, useState, useTransition } from "react";
-import MockStripePaymentForm from "./mock-stripe-payment-form";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ModernStripePaymentForm from "./modern-stripe-payment-form";
 import PaymentMethodSelector from "./payment-method-selector";
 import PaymentStatus from "./payment-status";
 import PayPalPaymentForm from "./paypal-payment-form";
@@ -28,6 +29,7 @@ export default function PaymentForm({
   description,
   customerEmail,
 }: PaymentFormProps) {
+  const router = useRouter();
   const [selectedMethod, setSelectedMethod] = useState<
     "STRIPE" | "PAYPAL" | null
   >(null);
@@ -36,16 +38,15 @@ export default function PaymentForm({
   >("select");
   const [paymentData, setPaymentData] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  const [stripeState, stripeAction] = useActionState(createStripePayment, {
-    errors: {},
-    message: null,
-  });
-
-  const [paypalState, paypalAction] = useActionState(createPayPalPayment, {
-    errors: {},
-    message: null,
+  // Debug current state
+  console.log("🔧 PaymentForm state:", {
+    selectedMethod,
+    paymentStep,
+    hasPaymentData: !!paymentData,
+    errorMessage,
+    isPending,
   });
 
   const handleMethodSelect = (method: "STRIPE" | "PAYPAL") => {
@@ -54,6 +55,16 @@ export default function PaymentForm({
 
   const handleProceedToPayment = async () => {
     if (!selectedMethod) return;
+
+    console.log("🚀 Proceeding to payment:", {
+      selectedMethod,
+      invoiceId,
+      amount,
+      currency,
+    });
+
+    setIsPending(true);
+    setErrorMessage(null);
 
     const formData = new FormData();
     formData.append("invoiceId", invoiceId);
@@ -67,60 +78,101 @@ export default function PaymentForm({
       formData.append("receiptEmail", customerEmail);
     }
 
-    startTransition(async () => {
-      try {
-        if (selectedMethod === "STRIPE") {
-          const result = await stripeAction(formData);
-          if (result.success && result.paymentIntent) {
-            setPaymentData(result.paymentIntent);
-            setPaymentStep("pay");
-          } else {
-            setErrorMessage(result.message || "Failed to create payment");
-            setPaymentStep("error");
-          }
-        } else if (selectedMethod === "PAYPAL") {
-          const result = await paypalAction(formData);
-          if (result.success && result.paypalOrder) {
-            setPaymentData(result.paypalOrder);
-            setPaymentStep("pay");
-          } else {
-            setErrorMessage(result.message || "Failed to create PayPal order");
-            setPaymentStep("error");
-          }
+    try {
+      if (selectedMethod === "STRIPE") {
+        console.log("💳 Creating Stripe payment...");
+        const result = await createStripePayment({}, formData);
+        console.log("💳 Stripe payment result:", result);
+
+        if (result.success && result.paymentIntent) {
+          console.log("✅ Payment intent created, moving to pay step");
+          setPaymentData(result.paymentIntent);
+          setPaymentStep("pay");
+        } else {
+          console.error("❌ Failed to create payment:", result.message);
+          setErrorMessage(result.message || "Failed to create payment");
+          setPaymentStep("error");
         }
-      } catch (error) {
-        setErrorMessage("An unexpected error occurred");
-        setPaymentStep("error");
+      } else if (selectedMethod === "PAYPAL") {
+        console.log("🟡 Creating PayPal payment...");
+        const result = await createPayPalPayment({}, formData);
+        console.log("🟡 PayPal payment result:", result);
+
+        if (result.success && result.paypalOrder) {
+          console.log("✅ PayPal order created, moving to pay step");
+          setPaymentData(result.paypalOrder);
+          setPaymentStep("pay");
+        } else {
+          console.error("❌ Failed to create PayPal order:", result.message);
+          setErrorMessage(result.message || "Failed to create PayPal order");
+          setPaymentStep("error");
+        }
       }
-    });
+    } catch (error) {
+      console.error("❌ Unexpected error:", error);
+      setErrorMessage("An unexpected error occurred");
+      setPaymentStep("error");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handlePaymentSuccess = () => {
-    setPaymentStep("success");
-    // Auto-redirect after 3 seconds or when user clicks continue
-    setTimeout(() => {
-      window.location.href = `/dashboard/invoices/${invoiceId}`;
-    }, 3000);
+    console.log("✅ Payment success callback triggered");
+    try {
+      setPaymentStep("success");
+      // Auto-redirect after 3 seconds or when user clicks continue
+      setTimeout(() => {
+        console.log("🔄 Auto-redirecting to invoice page");
+        router.push(`/dashboard/invoices/${invoiceId}`);
+      }, 3000);
+    } catch (error) {
+      console.error("❌ Error in payment success callback:", error);
+    }
   };
 
   const handlePaymentError = (error: string) => {
-    setErrorMessage(error);
-    setPaymentStep("error");
+    console.log("❌ Payment error callback triggered:", error);
+    try {
+      setErrorMessage(error);
+      setPaymentStep("error");
+    } catch (err) {
+      console.error("❌ Error in payment error callback:", err);
+    }
   };
 
   const handleBackToSelect = () => {
-    setPaymentStep("select");
-    setSelectedMethod(null);
-    setPaymentData(null);
-    setErrorMessage(null);
+    console.log("🔄 Going back to payment method selection");
+    try {
+      setPaymentStep("select");
+      setSelectedMethod(null);
+      setPaymentData(null);
+      setErrorMessage(null);
+    } catch (error) {
+      console.error("❌ Error in back to select callback:", error);
+    }
   };
 
   const handleCancel = () => {
-    window.location.href = `/dashboard/invoices/${invoiceId}`;
+    console.log("❌ Payment cancelled, redirecting to invoice");
+    try {
+      router.push(`/dashboard/invoices/${invoiceId}`);
+    } catch (error) {
+      console.error("❌ Error in cancel callback:", error);
+      // Fallback to window.location if router fails
+      window.location.href = `/dashboard/invoices/${invoiceId}`;
+    }
   };
 
   const handleContinueAfterSuccess = () => {
-    window.location.href = `/dashboard/invoices/${invoiceId}`;
+    console.log("✅ Continue after success, redirecting to invoice");
+    try {
+      router.push(`/dashboard/invoices/${invoiceId}`);
+    } catch (error) {
+      console.error("❌ Error in continue callback:", error);
+      // Fallback to window.location if router fails
+      window.location.href = `/dashboard/invoices/${invoiceId}`;
+    }
   };
 
   const formatAmount = (amount: number) => {
@@ -173,7 +225,7 @@ export default function PaymentForm({
                 {isPending ? "Processing..." : "Continue to Payment"}
               </Button>
               <Button
-                variant="outline"
+                className="bg-gray-500 hover:bg-gray-400 active:bg-gray-600"
                 onClick={handleCancel}
                 disabled={isPending}
               >
@@ -198,7 +250,7 @@ export default function PaymentForm({
             </h3>
           </div>
 
-          <MockStripePaymentForm
+          <ModernStripePaymentForm
             clientSecret={paymentData.clientSecret}
             amount={paymentData.amount}
             currency={paymentData.currency}
@@ -281,7 +333,10 @@ export default function PaymentForm({
 
           <div className="flex space-x-3 justify-center">
             <Button onClick={handleBackToSelect}>Try Again</Button>
-            <Button variant="outline" onClick={handleCancel}>
+            <Button
+              className="bg-gray-500 hover:bg-gray-400 active:bg-gray-600"
+              onClick={handleCancel}
+            >
               Cancel
             </Button>
           </div>

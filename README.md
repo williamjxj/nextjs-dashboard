@@ -34,4 +34,10 @@ $ openssl rand -base64 32
 - `loading.tsx` is a special Next.js file built on top of React Suspense. It allows you to create fallback UI to show as a replacement while page content loads.
 - `eslint-plugin-jsx-a11y` plugin in its ESLint config to help catch accessibility issues early.
 - Email: user@nextmail.com / Password: 123456
--
+
+## Quick Start
+
+```bash
+$ pnpm run dev
+$ pnpm prisma studio
+```
