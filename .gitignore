@@ -29,7 +29,7 @@ yarn-error.log*
 .env
 
 # vscode settings with secrets
-.vscode/mcp.json
+.vscode
 
 # vercel
 .vercel
